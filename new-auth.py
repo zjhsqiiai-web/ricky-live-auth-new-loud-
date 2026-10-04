@@ -103,7 +103,7 @@ STATUS_OVERRIDE_ACTIVE = True
 
 # 2. Extract configuration constants
 PREFIX = "^"
-MAIN_OWNER = 1450089654018637918
+MAIN_OWNER = 1457960499798081549
 AUTHORIZED_USERS = []
 # ⚡ FAST BOOT TOGGLE: 
 # Set to TRUE for instant local testing (1s delay).
