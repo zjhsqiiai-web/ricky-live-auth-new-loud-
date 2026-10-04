@@ -744,6 +744,42 @@ class ForbidToken(discord.Client):
             if message.channel.id not in globals()['quest_tasks']: globals()['quest_tasks'][message.channel.id] = []
             globals()['quest_tasks'][message.channel.id].append(task)
 
+        elif command == "unquest" or command == "stopquest":
+            # Usage: ^unquest (stops all bots) OR ^unquest @bot (stops one)
+            if message.mentions and self.user not in message.mentions:
+                return
+
+            killed_count = 0
+            
+            # 1. Sweep and assassinate all active quest threads
+            for task in asyncio.all_tasks():
+                t_name = str(task.get_name())
+                if t_name.startswith("quest_"):
+                    task.cancel()
+                    killed_count += 1
+
+            # 2. Wipe the global registry dictionary to prevent memory leaks
+            _q_tasks = globals().get('quest_tasks', {})
+            _q_tasks.clear()
+
+            # 3. Gateway Failsafe: If the bot was stuck mid-game, release the presence lock
+            if getattr(self, 'custom_stream_active', False):
+                self.custom_stream_active = False
+                try: 
+                    await self.change_presence(activity=None)
+                except Exception: 
+                    pass
+
+            # 4. Swarm Staggered Reply
+            await asyncio.sleep((self.user.id % 8) * 0.3)
+            
+            if killed_count > 0:
+                await message.channel.send(f"🛑 FORB1D🔥 **{self.user.name}** terminated Quest Engine ({killed_count} threads neutralized).")
+            else:
+                # Only reply if explicitly targeted to prevent swarm spam
+                if message.mentions:
+                    await message.channel.send(f"⚠️ **{self.user.name}** found no active Quest loops to terminate.")
+
         elif command == "purge":
             # Usage: ^purge @bot <amount>
             if not message.mentions or self.user not in message.mentions:
@@ -3192,6 +3228,8 @@ class ForbidToken(discord.Client):
 > ^recon @user          (Acc Info)
 > ^purge @bot <amt>     (Del Msgs)
 > ^say @bot <text>      (Bot Speak)
+> ^quest all            (Swarm Autoplay)
+> ^quest @bot           (Precision Quest)
 
 ======================================
 ⚡ Powered by FORB1D🔥 Network ⚡
